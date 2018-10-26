@@ -145,8 +145,8 @@ def train_PG(
 def main():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('env_name', type=str, default='CartPole-v0')
-    # parser.add_argument('--env_name', type=str, default='InvertedPendulum-v2')
+    # parser.add_argument('env_name', type=str, default='CartPole-v0')
+    parser.add_argument('env_name', type=str)
     parser.add_argument('--exp_name', type=str, default='vpg')
     parser.add_argument('--render', action='store_true')
     parser.add_argument('--discount', type=float, default=1.0)
@@ -177,6 +177,7 @@ def main():
     for e in range(args.n_experiments):
         seed = args.seed + 10*e
         print('Running experiment with seed %d'%seed)
+        print(args.dont_normalize_advantages)
 
         def train_func():
             train_PG(
@@ -197,7 +198,6 @@ def main():
                 size=args.size
                 )
 
-        train_func()
         # # Awkward hacky process runs, because Tensorflow does not like
         # # repeatedly calling train_PG in the same thread.
 

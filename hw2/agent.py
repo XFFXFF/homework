@@ -1,6 +1,7 @@
-import tensorflow as tf
-import numpy as np
+import time
 
+import numpy as np
+import tensorflow as tf
 
 #============================================================================================#
 # Utilities
@@ -130,7 +131,7 @@ class Agent(object):
         else:
             # YOUR_CODE_HERE
             sy_mean = build_mlp(sy_ob_no, self.ac_dim, 'continue_mean', self.n_layers, self.size)
-            sy_logstd = tf.get_variable('log_std', [self.ac_dim], initializer=tf.zeros_initializer())
+            sy_logstd = tf.get_variable('log_std', [self.ac_dim], initializer=tf.random_normal_initializer())
             return (sy_mean, sy_logstd)
 
     #========================================================================================#
@@ -169,9 +170,8 @@ class Agent(object):
         else:
             sy_mean, sy_logstd = policy_parameters
             # YOUR_CODE_HERE
-            sy_logstd = sy_mean * 0.0 + sy_logstd
-            dist = tf.distributions.Normal(sy_mean, sy_logstd)
-            sy_sampled_ac = dist.sample()
+            sy_std = tf.exp(sy_logstd)
+            sy_sampled_ac = sy_mean + sy_std * tf.random_normal(tf.shape(sy_mean))
         return sy_sampled_ac
 
     #========================================================================================#
@@ -209,9 +209,10 @@ class Agent(object):
         else:
             sy_mean, sy_logstd = policy_parameters
             # YOUR_CODE_HERE
-            sy_logstd = sy_mean * 0.0 + sy_logstd
-            dist = tf.distributions.Normal(sy_mean, sy_logstd)
-            sy_logprob_n = dist.log_prob(sy_ac_na)
+            sy_std = tf.exp(sy_logstd)
+            sy_logprob_n =  - 0.5 * tf.reduce_sum(tf.square((sy_ac_na - sy_mean) / sy_std), axis=-1) \
+               - 0.5 * np.log(2.0 * np.pi) * tf.to_float(tf.shape(sy_ac_na)[-1]) \
+               - tf.reduce_sum(sy_logstd, axis=-1)
         return sy_logprob_n
 
     def build_computation_graph(self):
@@ -303,6 +304,7 @@ class Agent(object):
             # raise NotImplementedError
             ac = self.sess.run(self.sy_sampled_ac, feed_dict={self.sy_ob_no: np.array(ob)[None]}) # YOUR CODE HERE
             ac = ac[0]
+            # print(ac)
             acs.append(ac)
             ob, rew, done, _ = env.step(ac)
             rewards.append(rew)

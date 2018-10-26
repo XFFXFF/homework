@@ -95,6 +95,7 @@ def main():
     parser.add_argument('--value', default='AverageReturn', nargs='*')
     args = parser.parse_args()
 
+
     use_legend = False
     if args.legend is not None:
         assert len(args.legend) == len(args.logdir), \
