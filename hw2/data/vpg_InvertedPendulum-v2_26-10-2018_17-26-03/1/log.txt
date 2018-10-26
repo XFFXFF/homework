@@ -1,0 +1,2 @@
+Time	Iteration	AverageReturn	StdReturn	MaxReturn	MinReturn	EpLenMean	EpLenStd	TimestepsThisBatch	TimestepsSoFar
+4.336231708526611	0	27.27027	5.655175	43.0	20.0	27.27027027027027	5.65517533194702	1009	1009

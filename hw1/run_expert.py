@@ -20,8 +20,8 @@ import load_policy
 def main():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('expert_policy_file', type=str)
-    parser.add_argument('envname', type=str)
+    parser.add_argument('expert_policy_file', type=str, default='experts/Ant-v2.pkl')
+    parser.add_argument('envname', type=str, default='Ant-v2')
     parser.add_argument('--render', action='store_true')
     parser.add_argument("--max_timesteps", type=int)
     parser.add_argument('--num_rollouts', type=int, default=20,
