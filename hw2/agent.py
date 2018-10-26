@@ -84,7 +84,6 @@ class Agent(object):
                 sy_ac_na: placeholder for actions
                 sy_adv_n: placeholder for advantages
         """
-        # raise NotImplementedError
         sy_ob_no = tf.placeholder(shape=[None, self.ob_dim], name="ob", dtype=tf.float32)
         if self.discrete:
             sy_ac_na = tf.placeholder(shape=[None], name="ac", dtype=tf.int32) 
@@ -123,7 +122,6 @@ class Agent(object):
                 Pass in self.n_layers for the 'n_layers' argument, and
                 pass in self.size for the 'size' argument.
         """
-        # raise NotImplementedError
         if self.discrete:
             # YOUR_CODE_HERE
             sy_logits_na = build_mlp(sy_ob_no, self.ac_dim, 'discrete_logits', self.n_layers, self.size)
@@ -161,7 +159,6 @@ class Agent(object):
         
                  This reduces the problem to just sampling z. (Hint: use tf.random_normal!)
         """
-        # raise NotImplementedError
         if self.discrete:
             sy_logits_na = policy_parameters
             # YOUR_CODE_HERE
@@ -200,7 +197,6 @@ class Agent(object):
                 For the discrete case, use the log probability under a categorical distribution.
                 For the continuous case, use the log probability under a multivariate gaussian.
         """
-        # raise NotImplementedError
         if self.discrete:
             sy_logits_na = policy_parameters
             # YOUR_CODE_HERE
@@ -264,7 +260,6 @@ class Agent(object):
         # neural network baseline. These will be used to fit the neural network baseline. 
         #========================================================================================#
         if self.nn_baseline:
-            raise NotImplementedError
             self.baseline_prediction = tf.squeeze(build_mlp(
                                     self.sy_ob_no, 
                                     1, 
@@ -272,8 +267,8 @@ class Agent(object):
                                     n_layers=self.n_layers,
                                     size=self.size))
             # YOUR_CODE_HERE
-            self.sy_target_n = None
-            baseline_loss = None
+            self.sy_target_n = tf.placeholder(tf.float32, shape=[None], name='target')
+            baseline_loss = tf.reduce_mean(tf.square(self.sy_target_n - self.baseline_prediction))
             self.baseline_update_op = tf.train.AdamOptimizer(self.learning_rate).minimize(baseline_loss)
 
     def sample_trajectories(self, itr, env):
@@ -301,7 +296,6 @@ class Agent(object):
             #====================================================================================#
             #                           ----------PROBLEM 3----------
             #====================================================================================#
-            # raise NotImplementedError
             ac = self.sess.run(self.sy_sampled_ac, feed_dict={self.sy_ob_no: np.array(ob)[None]}) # YOUR CODE HERE
             ac = ac[0]
             # print(ac)
@@ -433,8 +427,7 @@ class Agent(object):
             # Hint #bl1: rescale the output from the nn_baseline to match the statistics
             # (mean and std) of the current batch of Q-values. (Goes with Hint
             # #bl2 in Agent.update_parameters.
-            raise NotImplementedError
-            b_n = None # YOUR CODE HERE
+            b_n = self.sess.run(self.baseline_prediction, feed_dict={self.sy_ob_no: ob_no}) # YOUR CODE HERE
             adv_n = q_n - b_n
         else:
             adv_n = q_n.copy()
@@ -506,8 +499,10 @@ class Agent(object):
             # Agent.compute_advantage.)
 
             # YOUR_CODE_HERE
-            raise NotImplementedError
-            target_n = None 
+
+            target_n = q_n
+            self.sess.run(self.baseline_update_op, feed_dict={self.sy_target_n: target_n,
+                                                              self.sy_ob_no: ob_no})
 
         #====================================================================================#
         #                           ----------PROBLEM 3----------
