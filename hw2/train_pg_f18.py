@@ -177,7 +177,6 @@ def main():
     for e in range(args.n_experiments):
         seed = args.seed + 10*e
         print('Running experiment with seed %d'%seed)
-        print(args.dont_normalize_advantages)
 
         def train_func():
             train_PG(
