@@ -41,7 +41,9 @@ class ModelBasedPolicy(object):
         """
         ### PROBLEM 1
         ### YOUR CODE HERE
-        raise NotImplementedError
+        state_ph = tf.placeholder(tf.float32, [None, self._state_dim], name='state')
+        action_ph = tf.placeholder(tf.float32, [None, self._action_dim], name='action')
+        next_state_ph = tf.placeholder(tf.float32, [None, self._state_dim], name='next_state')
 
         return state_ph, action_ph, next_state_ph
 
@@ -53,7 +55,7 @@ class ModelBasedPolicy(object):
                 next_state_pred: predicted next state
 
             implementation details (in order):
-                (a) Normalize both the state and action by using the statistics of self._init_dataset and
+                (a) Normalize both the state and action by using the statistics of self._inift_dataset and
                     the utils.normalize function
                 (b) Concatenate the normalized state and action
                 (c) Pass the concatenated, normalized state-action tensor through a neural network with
@@ -65,8 +67,19 @@ class ModelBasedPolicy(object):
         """
         ### PROBLEM 1
         ### YOUR CODE HERE
-        raise NotImplementedError
-
+        state_mean = self._init_dataset.state_mean
+        state_std = self._init_dataset.state_std
+        action_mean = self._init_dataset.action_mean
+        action_std = self._init_dataset.action_std
+        delta_state_mean = self._init_dataset.delta_state_mean
+        delta_state_std = self._init_dataset.delta_state_std
+        nomalized_state = utils.normalize(state, state_mean, state_std)
+        nomalized_aciton = utils.normalize(action, action_mean, action_std)
+        input_layer = tf.concat([nomalized_state, nomalized_aciton], 1)
+        delta_state = utils.build_mlp(input_layer, output_dim=self._state_dim, scope='dynamic_func', 
+                        n_layers=self._nn_layers, reuse=reuse)
+        unnormalized_delta_state = utils.unnormalize(delta_state, delta_state_mean, delta_state_std)
+        next_state_pred = state + unnormalized_delta_state
         return next_state_pred
 
     def _setup_training(self, state_ph, next_state_ph, next_state_pred):
@@ -89,8 +102,15 @@ class ModelBasedPolicy(object):
         """
         ### PROBLEM 1
         ### YOUR CODE HERE
-        raise NotImplementedError
+        actual_state_diff = next_state_ph - state_ph
+        pred_state_diff = next_state_pred - state_ph
+        delta_state_mean = self._init_dataset.delta_state_mean
+        delta_state_std = self._init_dataset.delta_state_std
+        norm_actual_state_diff = utils.normalize(actual_state_diff, delta_state_mean, delta_state_std)
+        norm_pred_state_diff = utils.normalize(pred_state_diff, delta_state_mean, delta_state_std)
 
+        loss = tf.reduce_mean(tf.square(norm_pred_state_diff - norm_actual_state_diff))
+        optimizer = tf.train.AdamOptimizer(learning_rate=self._learning_rate).minimize(loss)
         return loss, optimizer
 
     def _setup_action_selection(self, state_ph):
@@ -122,7 +142,7 @@ class ModelBasedPolicy(object):
         """
         ### PROBLEM 2
         ### YOUR CODE HERE
-        raise NotImplementedError
+        
 
         return best_action
 
@@ -136,7 +156,9 @@ class ModelBasedPolicy(object):
 
         ### PROBLEM 1
         ### YOUR CODE HERE
-        raise NotImplementedError
+        state_ph, action_ph, next_state_ph = self._setup_placeholders()
+        next_state_pred = self._dynamics_func(state_ph, action_ph, reuse=tf.AUTO_REUSE)
+        loss, optimizer = self._setup_training(state_ph, next_state_ph, next_state_pred)
         ### PROBLEM 2
         ### YOUR CODE HERE
         best_action = None
@@ -155,7 +177,9 @@ class ModelBasedPolicy(object):
         """
         ### PROBLEM 1
         ### YOUR CODE HERE
-        raise NotImplementedError
+        loss, _ = self._sess.run([self._loss, self._optimizer], feed_dict={self._state_ph: states,
+                                                                 self._action_ph: actions,
+                                                                 self._next_state_ph: next_states})
 
         return loss
 
@@ -169,14 +193,15 @@ class ModelBasedPolicy(object):
         implementation detils:
             (i) The state and action arguments are 1-dimensional vectors (NO batch dimension)
         """
-        assert np.shape(state) == (self._state_dim,)
-        assert np.shape(action) == (self._action_dim,)
+        # assert np.shape(state) == (self._state_dim,)
+        # assert np.shape(action) == (self._action_dim,)
 
         ### PROBLEM 1
         ### YOUR CODE HERE
-        raise NotImplementedError
+        next_state_pred = self._sess.run(self._next_state_pred, feed_dict={self._state_ph: state,
+                                                                           self._action_ph: action})                                                                
 
-        assert np.shape(next_state_pred) == (self._state_dim,)
+        # assert np.shape(next_state_pred) == (self._state_dim,)
         return next_state_pred
 
     def get_action(self, state):

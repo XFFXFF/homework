@@ -85,7 +85,10 @@ class ModelBasedRL(object):
         losses = []
         ### PROBLEM 1
         ### YOUR CODE HERE
-        raise NotImplementedError
+        for i in range(self._training_epochs):
+            for _, (states, actions, next_states, _, _) in enumerate(self._random_dataset.random_iterator(self._training_batch_size)):
+                loss = self._policy.train_step(states, actions, next_states)
+                losses.append(loss)
 
         logger.record_tabular('TrainingLossStart', losses[0])
         logger.record_tabular('TrainingLossFinal', losses[-1])
@@ -108,7 +111,7 @@ class ModelBasedRL(object):
 
         implementation details:
             (i) Train using the self._random_dataset
-            (ii) For each rollout, use the initial state and all actions to predict the future states.
+            (ii) For each rsollout, use the initial state and all actions to predict the future states.
                  Store these predicted states in the pred_states list.
                  NOTE: you should *not* be using any of the states in states[1:]. Only use states[0]
             (iii) After predicting the future states, we have provided plotting code that plots the actual vs
@@ -117,18 +120,24 @@ class ModelBasedRL(object):
         logger.info('Training policy....')
         ### PROBLEM 1
         ### YOUR CODE HERE
-        raise NotImplementedError
-
+        self._train_policy(self._random_dataset)
+        
         logger.info('Evaluating predictions...')
         for r_num, (states, actions, _, _, _) in enumerate(self._random_dataset.rollout_iterator()):
             pred_states = []
 
             ### PROBLEM 1
             ### YOUR CODE HERE
-            raise NotImplementedError
+            pred_state = np.array(states[0])[None, :]
+            for action in actions:
+                action = np.array(action)[None, :]
+                pred_state = self._policy.predict(pred_state, action)
+                pred_states.append(pred_state)
 
             states = np.asarray(states)
             pred_states = np.asarray(pred_states)
+
+            pred_states = pred_states.squeeze(1)
 
             state_dim = states.shape[1]
             rows = int(np.sqrt(state_dim))
