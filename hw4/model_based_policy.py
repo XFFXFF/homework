@@ -142,7 +142,43 @@ class ModelBasedPolicy(object):
         """
         ### PROBLEM 2
         ### YOUR CODE HERE
-        
+        # action_sequences = []
+        # for i in range(self._num_random_action_selection):
+        #     action_sequence = []
+        #     for j in range(self._horizon):
+        #         action = tf.random_uniform([self._action_dim], 
+        #                                     minval=self._action_space_low, maxval=self._action_space_high)
+        #         action_sequence.append(action)
+        #     action_sequences.append(action_sequence)
+
+        action_sequences = tf.random_uniform([self._num_random_action_selection, self._horizon, self._action_dim],
+                                              minval=self._action_space_low, maxval=self._action_space_high)
+        # cost_sequences = []
+        # for i in range(self._num_random_action_selection):
+        #     print(i)
+        #     cost_sequence = 0
+        #     state = state_ph
+        #     for j in range(self._horizon):
+        #         action = action_sequences[i][j]
+        #         action = action[None, :]
+        #         next_state_pred = self._dynamics_func(state, action, reuse=tf.AUTO_REUSE)
+        #         cost_sequence += self._cost_fn(state, action, next_state_pred)
+        #         state = next_state_pred
+        #     cost_sequences.append(cost_sequence)
+
+        cost_sequences = tf.zeros((self._num_random_action_selection))
+        state = tf.ones((self._num_random_action_selection, self._state_dim)) * state_ph
+        action_sequences = tf.transpose(action_sequences, perm=[1, 0, 2])
+        for i in range(self._horizon):
+            action = action_sequences[i]
+            next_state_pred = self._dynamics_func(state, action, reuse=tf.AUTO_REUSE)
+            cost_sequences += self._cost_fn(state, action, next_state_pred)
+            state = next_state_pred
+        action_sequences = tf.transpose(action_sequences, perm=[1, 0, 2])
+        cost_sequences = tf.convert_to_tensor(cost_sequences)
+        lowest_cost_sequence_idx = tf.argmin(cost_sequences)
+        lowest_cost_sequence = tf.gather(action_sequences, lowest_cost_sequence_idx)
+        best_action = lowest_cost_sequence[0]
 
         return best_action
 
@@ -161,7 +197,7 @@ class ModelBasedPolicy(object):
         loss, optimizer = self._setup_training(state_ph, next_state_ph, next_state_pred)
         ### PROBLEM 2
         ### YOUR CODE HERE
-        best_action = None
+        best_action = self._setup_action_selection(state_ph)
 
         sess.run(tf.global_variables_initializer())
 
@@ -215,7 +251,7 @@ class ModelBasedPolicy(object):
 
         ### PROBLEM 2
         ### YOUR CODE HERE
-        raise NotImplementedError
-
+        best_action = self._sess.run(self._best_action, feed_dict={self._state_ph: state[None, :]})
+        # best_action = best_action[0]
         assert np.shape(best_action) == (self._action_dim,)
         return best_action

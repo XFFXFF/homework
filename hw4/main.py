@@ -7,7 +7,7 @@ from logger import logger
 from model_based_rl import ModelBasedRL
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--question', type=str, choices=('q1, q2, q3'), default='q1')
+parser.add_argument('question', type=str, choices=('q1, q2, q3'))
 parser.add_argument('--exp_name', type=str, default=None)
 parser.add_argument('--env', type=str, default='HalfCheetah', choices=('HalfCheetah',))
 parser.add_argument('--render', action='store_true')
