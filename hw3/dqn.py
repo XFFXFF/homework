@@ -238,7 +238,7 @@ class QLearner(object):
     # YOUR CODE HERE
     self.replay_buffer_idx = self.replay_buffer.store_frame(self.last_obs)
     epsilon = self.exploration.value(self.t)
-    if self.t > self.learning_starts and self.replay_buffer.can_sample(self.batch_size):
+    if self.model_initialized:
         if np.random.random() < epsilon:
             act = self.env.action_space.sample()
         else:
