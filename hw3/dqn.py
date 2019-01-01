@@ -162,6 +162,7 @@ class QLearner(object):
     self.q_func = q_func(obs_t_float, self.num_actions, scope='q', reuse=False)
     target_q_func = q_func(obs_tp1_float, self.num_actions, scope='q_targ', reuse=False)
     y = self.rew_t_ph + (1 - self.done_mask_ph) * gamma * tf.reduce_max(target_q_func, axis=1)
+    y = tf.stop_gradient(y)
     q_act = tf.reduce_sum(self.q_func * tf.one_hot(self.act_t_ph, self.num_actions), axis=1)
     self.total_error = huber_loss(q_act - y)
     q_func_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='q')
