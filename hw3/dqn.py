@@ -93,7 +93,6 @@ class QLearner(object):
     self.target_update_freq = target_update_freq
     self.optimizer_spec = optimizer_spec
     self.batch_size = batch_size
-    self.gamma = gamma
     self.learning_freq = learning_freq
     self.learning_starts = learning_starts
     self.stopping_criterion = stopping_criterion
@@ -162,7 +161,7 @@ class QLearner(object):
     # YOUR CODE HERE
     self.q_func = q_func(obs_t_float, self.num_actions, scope='q', reuse=False)
     target_q_func = q_func(obs_tp1_float, self.num_actions, scope='q_targ', reuse=False)
-    y = self.rew_t_ph + (1 - self.done_mask_ph) * self.gamma * tf.reduce_max(target_q_func, axis=1)
+    y = self.rew_t_ph + (1 - self.done_mask_ph) * gamma * tf.reduce_max(target_q_func, axis=1)
     q_act = tf.reduce_sum(self.q_func * tf.one_hot(self.act_t_ph, self.num_actions), axis=1)
     self.total_error = huber_loss(q_act - y)
     q_func_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='q')
@@ -199,7 +198,6 @@ class QLearner(object):
 
     self.start_time = None
     self.t = 0
-    self.session.run(tf.global_variables_initializer())
 
   def stopping_criterion_met(self):
     return self.stopping_criterion is not None and self.stopping_criterion(self.env, self.t)
@@ -240,10 +238,13 @@ class QLearner(object):
     # YOUR CODE HERE
     self.replay_buffer_idx = self.replay_buffer.store_frame(self.last_obs)
     epsilon = self.exploration.value(self.t)
-    if np.random.random() < epsilon:
-      act = self.env.action_space.sample()
+    if self.t > self.learning_starts and self.replay_buffer.can_sample(self.batch_size):
+        if np.random.random() < epsilon:
+            act = self.env.action_space.sample()
+        else:
+            act = np.argmax(self.session.run(self.q_func, feed_dict={self.obs_t_ph: self.replay_buffer.encode_recent_observation()[None, :]}))
     else:
-      act = np.argmax(self.session.run(self.q_func, feed_dict={self.obs_t_ph: self.replay_buffer.encode_recent_observation()[None, :]}))
+        act = self.env.action_space.sample()
     # self.t += 1
     next_obs, rew, done, info = self.env.step(act)
     self.last_obs = next_obs
