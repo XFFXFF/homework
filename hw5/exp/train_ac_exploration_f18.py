@@ -17,8 +17,8 @@ from multiprocessing import Process
 # from exploration import ExemplarExploration, DiscreteExploration, RBFExploration
 # from density_model import Exemplar, Histogram, RBF
 
-from exploration import DiscreteExploration
-from density_model import Histogram
+from exploration import DiscreteExploration, RBFExploration, ExemplarExploration
+from density_model import Histogram, RBF, Exemplar
 
 #============================================================================================#
 # Utilities
@@ -539,7 +539,7 @@ def train_AC(
             if dm == 'ex2':
                 ### PROBLEM 3
                 ### YOUR CODE HERE
-                raise NotImplementedError
+                ll, kl, elbo = exploration.fit_density_model(ob_no)
             elif dm == 'hist' or dm == 'rbf':
                 ### PROBLEM 1
                 ### YOUR CODE HERE
